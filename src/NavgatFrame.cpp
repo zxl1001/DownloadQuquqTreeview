@@ -27,7 +27,7 @@ NavgatFrame::NavgatFrame(BDSDownloadQueueWidget *downWidget, const QString &titl
     ui->setupUi(this);
     ui->label->setText(title);
     m_queueWiget = downWidget;
-    connect(m_queueWiget, SIGNAL(downloadElementFinish(uint,QString)), this, SLOT(downloadElementFinished(uint,QString)));
+    connect(m_queueWiget, SIGNAL(downloadElementFinished(uint,BDSDownloadQueue::DownloadStatus,QString)), this, SLOT(downloadElementFinished(uint,BDSDownloadQueue::DownloadStatus,QString)));
 }
 
 NavgatFrame::~NavgatFrame()
@@ -49,11 +49,27 @@ BDSDownloadQueueWidget *NavgatFrame::queueWiget() const
     return m_queueWiget;
 }
 
-void NavgatFrame::downloadElementFinished(uint id, const QString &msg)
+void NavgatFrame::downloadElementFinished(uint id, const BDSDownloadQueue::DownloadStatus &status, const QString &msg)
 {
-    if(id == 0)
+    qDebug()<<"下载完成.当前的状态:"<<id<<(uint)status<<msg;
+//    if(id == 0)
+//    {
+//        ui->startDownBtn->setText(DOWNBTN_FINEISER);
+//    }
+    if(status == BDSDownloadQueue::DownloadStatus::DOWNFINISHED)
     {
-        ui->startDownBtn->setText(DOWNBTN_FINEISER);
+//        ui->startDownBtn->setText(DOWNBTN_FINEISER);
+        ui->startDownBtn->setText(DOWNBTN_STOP);
+        ui->startDownBtn->setDisabled(true);
+    }
+    else if(status == BDSDownloadQueue::DownloadStatus::DOWNLOADABORT
+            || status == BDSDownloadQueue::DownloadStatus::DOWNLOADERR)
+    {
+        ui->startDownBtn->setText(DOWNBTN_START);
+    }
+    else
+    {
+        ui->startDownBtn->setText(DOWNBTN_STOP);
     }
     ui->processLabel->setText(msg);
 }

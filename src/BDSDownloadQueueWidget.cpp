@@ -41,7 +41,7 @@ BDSDownloadQueueWidget::BDSDownloadQueueWidget(uint rowCount, uint hash, QWidget
     setDownloadList();
 
     connect(&m_downloadQueue, SIGNAL(apiDownloadProgress(uint,qint64,qint64)), this,SLOT(downloadProgress(uint,qint64,qint64)));
-    connect(&m_downloadQueue, SIGNAL(signalFileFileFinished(uint,QString)), this,SLOT(downloadFinished(uint,QString)));
+    connect(&m_downloadQueue, SIGNAL(signalDownloadFileFinished(uint,BDSDownloadQueue::DownloadStatus,QString)), this,SLOT(downloadFinished(uint,BDSDownloadQueue::DownloadStatus,QString)));
 }
 
 BDSDownloadQueueWidget::~BDSDownloadQueueWidget()
@@ -67,7 +67,7 @@ void BDSDownloadQueueWidget::setDownloadList()
     {
         BDSDownloadItem item;
         item.setId(101+i);
-        item.setUrl(/*"http://10.69.143.65:9000/download/"*/"http://10.69.143.65/m.mp4");
+        item.setUrl(/*"http://10.69.143.147:9000/download/"*/"http://10.69.143.147/m.mp4");
         item.setSavefilename(QString("/home/zxl/tmp/tm1_%1.mp4").arg(item.getId()));
         item.setIsValid(false);
         m_downloadQueue.append(item);
@@ -117,6 +117,10 @@ QString BDSDownloadQueueWidget::getCurrentProcess()
 
 void BDSDownloadQueueWidget::downloadProgress(uint id, qint64 bytesReceived, qint64 bytesTotal)
 {
+    if(bytesTotal == 0)
+    {
+        return;
+    }
     for(int i=0; i<m_downloadModel->rowCount(); ++i)
     {
         uint itemId = m_downloadModel->index(i,0).data(DOWN_ID).toUInt();
@@ -130,12 +134,12 @@ void BDSDownloadQueueWidget::downloadProgress(uint id, qint64 bytesReceived, qin
     }
 }
 
-void BDSDownloadQueueWidget::downloadFinished(uint id, QString msg)
+void BDSDownloadQueueWidget::downloadFinished(uint id, const BDSDownloadQueue::DownloadStatus &status,const QString &msg)
 {
-    qDebug()<<"downloadFinished..."<<id<<msg;
+    qDebug()<<__FILE__<<__LINE__<<"downloadFinished..."<< id<< (uint)status << msg;
+    emit downloadElementFinished(id, status, m_downloadQueue.getProcess());
     if(id == 0)
     {
-        emit downloadElementFinish(id, m_downloadQueue.getProcess());
         return;
     }
     for(int i=0; i<m_downloadModel->rowCount(); ++i)

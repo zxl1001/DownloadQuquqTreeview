@@ -41,11 +41,11 @@ public:
 //    void resizeEvent(QResizeEvent *);
 
 signals:
-    void downloadElementFinish(uint id, const QString &msg);
+    void downloadElementFinished(uint id, const BDSDownloadQueue::DownloadStatus &status, const QString &msg);
 
 public slots:
     void downloadProgress(uint id, qint64 bytesReceived, qint64 bytesTotal);
-    void downloadFinished(uint id, QString msg);
+    void downloadFinished(uint id, const BDSDownloadQueue::DownloadStatus &status,const QString &msg);
 
 
 private:

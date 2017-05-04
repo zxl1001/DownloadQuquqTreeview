@@ -26,14 +26,15 @@ BDSDownloadQueue::BDSDownloadQueue(QObject *parent) : QObject(parent),
 }
 void BDSDownloadQueue::startDownload()
 {
-    qDebug()<<"start download queue:";
+    qDebug()<<"start download queue";
     if(m_status == DownloadStatus::DOWNLOADING)
     {
+        qDebug()<<"is downloading so don't need to startNextDownload.";
         return;
     }
-    else if(m_status == DownloadStatus::DOWNLOADABORT)
+    else if(m_status == DownloadStatus::DOWNLOADABORT || m_status == DownloadStatus::DOWNLOADERR)
     {
-        qDebug()<<"dowlnlad is finished";
+        qDebug()<<"download stop for abort or error!";
         m_queue.clear();
         for(int i=0; i< m_downloadFiles.count(); ++i)
         {
@@ -51,23 +52,23 @@ void BDSDownloadQueue::startNextDownload()
 {
     if(isDownloadOver())
     {
-        emit signalFileFileFinished(0,"Abort!");
+        m_status = DownloadStatus::DOWNFINISHED;
+        emit signalDownloadFileFinished(0, m_status, "Download Finished!");
         return;
     }
     if(m_queue.isEmpty())
     {
         return;
     }
-    m_status = DownloadStatus::DOWNLOADING;
 
+    m_status = DownloadStatus::DOWNLOADING;
     BDSDownloadItem curDownloadItem = m_queue.dequeue();
     if(curDownloadItem.getIsValid())
     {
-        emit signalFileFileFinished(curDownloadItem.getId(),"Finished!");
+        emit signalDownloadFileFinished(curDownloadItem.getId(), m_status, "Downlaod Finished!");
         startNextDownload();
         return;
     }
-
     m_saveFile.setFileName(curDownloadItem.getSavefilename());
     QFileInfo fileInfo(m_saveFile);
     QDir dir;
@@ -87,8 +88,9 @@ void BDSDownloadQueue::startNextDownload()
     m_reply->setProperty(DOWN_ITEM_ID,curDownloadItem.getId());
     m_reply->setProperty(DOWN_ITEM_SAVE_NAME, curDownloadItem.getSavefilename());
     connect(m_reply, SIGNAL(downloadProgress(qint64, qint64)),SLOT(downloadProgress(qint64,qint64)));
-    connect(m_reply, SIGNAL(finished()),  SLOT(downloadFinished()));
     connect(m_reply, SIGNAL(readyRead()), SLOT(downloadReadyRead()));
+    connect(m_reply, SIGNAL(error(QNetworkReply::NetworkError)), this, SLOT(downloadError(QNetworkReply::NetworkError)));
+    connect(m_reply, SIGNAL(finished()),  SLOT(downloadFinished()));
 }
 
 void BDSDownloadQueue::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
@@ -96,23 +98,37 @@ void BDSDownloadQueue::downloadProgress(qint64 bytesReceived, qint64 bytesTotal)
     emit apiDownloadProgress(m_reply->property(DOWN_ITEM_ID).toUInt(), bytesReceived, bytesTotal );
 }
 
+void BDSDownloadQueue::downloadError(QNetworkReply::NetworkError err)
+{
+    qDebug()<< err;
+}
+
 void BDSDownloadQueue::downloadFinished()
 {
+    qDebug()<<"m_replay error:"<<m_reply->error()<<m_reply->errorString();
     closeSaveFile();
     uint id = m_reply->property(DOWN_ITEM_ID).toUInt();
-    if(m_reply->error())
+    if(m_reply->error() == QNetworkReply::OperationCanceledError)
     {
         //download failed
-        qDebug()<<"Failed"<<m_reply->errorString();
-        emit signalFileFileFinished(id,m_reply->errorString());
+        qDebug()<<"Failed"<<m_reply->errorString()<<m_reply->error();
+        m_status = DownloadStatus::DOWNLOADABORT;
+        emit signalDownloadFileFinished(id, m_status, m_reply->errorString());
+    }
+    else if(m_reply->error() == QNetworkReply::NoError)
+    {
+        setFileValid(id);
+        emit signalDownloadFileFinished(id,m_status, "Finished!");
     }
     else
     {
-        setFileValid(id);
-        emit signalFileFileFinished(id,"Finished!");
+        qDebug()<<"Failed"<<m_reply->errorString()<<m_reply->error();
+        m_status = DownloadStatus::DOWNLOADERR;
+        emit signalDownloadFileFinished(id, m_status, m_reply->errorString());
     }
+
     m_reply->deleteLater();
-    if(m_status == DownloadStatus::DOWNLOADABORT)
+    if(m_status == DownloadStatus::DOWNLOADABORT || m_status == DownloadStatus::DOWNLOADERR)
     {
         return;
     }
@@ -169,7 +185,7 @@ void BDSDownloadQueue::stopDownload()
     qDebug()<<"stopDownload";
 
     closeSaveFile();
-    if(m_status == DownloadStatus::DOWNLOADABORT)
+    if(m_status == DownloadStatus::DOWNLOADABORT || m_status == DownloadStatus::DOWNLOADERR)
     {
         return;
     }
@@ -180,9 +196,9 @@ void BDSDownloadQueue::stopDownload()
         {
             return;
         }
+        m_status = DownloadStatus::DOWNLOADABORT;
         m_reply->abort();
         qDebug()<<"end.....is open:"<<m_reply->isOpen()<<"is running:"<<m_reply->isRunning()<<"is finished:"<<m_reply->isFinished();
-        m_status = DownloadStatus::DOWNLOADABORT;
         m_reply->disconnect();
     }
 }

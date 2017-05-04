@@ -35,7 +35,7 @@ signals:
     void removItem(uint hash);
     void popDown(uint hash, bool down);
 public slots:
-    void downloadElementFinished(uint id, const QString &msg);
+    void downloadElementFinished(uint id, const BDSDownloadQueue::DownloadStatus &status, const QString &msg);
 
 private slots:
     void on_startDownBtn_clicked();

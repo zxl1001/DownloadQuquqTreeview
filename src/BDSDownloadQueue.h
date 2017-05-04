@@ -68,7 +68,7 @@ public:
 
     enum  class DownloadStatus: uint
     {
-        DOWNWAITING,DOWNLOADING,DOWNLOADABORT,DOWNFINISHED
+        DOWNWAITING, DOWNLOADING, DOWNLOADABORT, DOWNLOADERR, DOWNFINISHED
     };
 
     DownloadStatus getStatus() const;
@@ -76,12 +76,12 @@ public:
 
 signals:
     void apiAllDownlFinished();
-    void signalFileFileFinished(uint id, QString msg);
-    void signalFileStatusChange(uint id, uint st);
+    void signalDownloadFileFinished(uint id, const BDSDownloadQueue::DownloadStatus &status,const QString &msg);
     void apiDownloadProgress(uint id, qint64, qint64);
 private slots:
     void startNextDownload();
     void downloadProgress(qint64 bytesReceived, qint64 bytesTotal);
+    void downloadError(QNetworkReply::NetworkError err);
     void downloadFinished();
     void downloadReadyRead();
 private:
