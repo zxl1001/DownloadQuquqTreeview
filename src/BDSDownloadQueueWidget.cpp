@@ -13,12 +13,15 @@
 #include "BDSDownloadQueueWidget.h"
 #include "ui_BDSDownloadQueueWidget.h"
 
+#include <QResizeEvent>
+
 #define DOWN_ID Qt::UserRole + 1
 
-BDSDownloadQueueWidget::BDSDownloadQueueWidget(uint hash, QWidget *parent) :
+BDSDownloadQueueWidget::BDSDownloadQueueWidget(uint rowCount, uint hash, QWidget *parent) :
     QDialog(parent),
     ui(new Ui::BDSDownloadQueueWidget),
-    m_downloadModel(new QStandardItemModel(this))
+    m_downloadModel(new QStandardItemModel(this)),
+    m_rowCount(rowCount)
 {
     ui->setupUi(this);
     m_hashValue = hash;
@@ -60,7 +63,7 @@ void BDSDownloadQueueWidget::setHashValue(const uint &hashValue)
 void BDSDownloadQueueWidget::setDownloadList()
 {
     m_downloadModel->removeRows(0,m_downloadModel->rowCount());
-    for(int i=0; i< 3; ++i)
+    for(int i=0; i< m_rowCount; ++i)
     {
         BDSDownloadItem item;
         item.setId(101+i);
@@ -75,7 +78,7 @@ void BDSDownloadQueueWidget::setDownloadList()
         m_downloadModel->setItem(i,1, new QStandardItem("0"));
         m_downloadModel->setItem(i,2, new QStandardItem("Waiting"));
     }
-    m_downloadModel->setRowCount(3);
+    m_downloadModel->setRowCount(m_rowCount);
 }
 void BDSDownloadQueueWidget::cleanProcess()
 {
@@ -100,6 +103,17 @@ QString BDSDownloadQueueWidget::getCurrentProcess()
 {
     return m_downloadQueue.getProcess();
 }
+
+//void BDSDownloadQueueWidget::resizeEvent(QResizeEvent *eve)
+//{
+//    qDebug()<<__FILE__<<eve->oldSize()<<eve->size();
+////    this->parentWidget()->resize(this->parentWidget()->width(), 36);
+//    resize(this->width(), m_downloadModel->rowCount() * 40);
+//    qDebug()<<"befor resize parent Widget size:"<<this->parentWidget();
+////    this->parentWidget()->resize(parentWidget()->width(),m_downloadModel->rowCount() * 40);
+////    qDebug()<<"after resize parent Widget size:"<<this->parentWidget();
+//}
+
 
 void BDSDownloadQueueWidget::downloadProgress(uint id, qint64 bytesReceived, qint64 bytesTotal)
 {
@@ -154,3 +168,4 @@ void BDSDownloadQueueWidget::downloadFinished(uint id, QString msg)
 //        ui->startDownBtn->setText("Retry");
 //    }
 //}
+

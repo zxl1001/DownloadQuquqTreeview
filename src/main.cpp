@@ -18,6 +18,15 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     MainWindow w;
     w.show();
-
+    qApp->setStyleSheet("QScrollBar{background:transparent; height:10px;}\
+                        QScrollBar::handle{background:lightgray; border:2px solid transparent; border-radius:5px;}\
+                        QScrollBar::handle:hover{background:gray;}\
+                        QScrollBar::sub-line{background:transparent;}\
+                        QScrollBar::add-line{background:transparent;}\
+                       QScrollBar{background:transparent; width: 10px;}\
+                        QScrollBar::handle{background:lightgray; border:2px solid transparent; border-radius:5px;}\
+                        QScrollBar::handle:hover{background:gray;}\
+                        QScrollBar::sub-line{background:transparent;}\
+                        QScrollBar::add-line{background:transparent;}");
     return a.exec();
 }

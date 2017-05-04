@@ -27,7 +27,7 @@ class BDSDownloadQueueWidget : public QDialog
     Q_OBJECT
 
 public:
-    explicit BDSDownloadQueueWidget(uint hash,QWidget *parent = 0);
+    explicit BDSDownloadQueueWidget(uint rowCount,uint hash,QWidget *parent = 0);
     ~BDSDownloadQueueWidget();
 
     uint hashValue() const;
@@ -38,6 +38,8 @@ public:
     void stopDownload();
     QString getCurrentProcess();
 
+//    void resizeEvent(QResizeEvent *);
+
 signals:
     void downloadElementFinish(uint id, const QString &msg);
 
@@ -45,11 +47,13 @@ public slots:
     void downloadProgress(uint id, qint64 bytesReceived, qint64 bytesTotal);
     void downloadFinished(uint id, QString msg);
 
+
 private:
     Ui::BDSDownloadQueueWidget *ui;
     uint m_hashValue;
     QStandardItemModel *m_downloadModel;
     BDSDownloadQueue    m_downloadQueue;
+    uint m_rowCount;
 };
 
 #endif // BDSDOWNLOADQUEUEWIDGET_H

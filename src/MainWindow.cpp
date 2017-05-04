@@ -54,10 +54,12 @@ void MainWindow::appendItem(uint index, const QString &title, uint hash)
     section->appendRow(item);
     m_model->appendRow(section);
 
-    BDSDownloadQueueWidget *downWidget = new BDSDownloadQueueWidget(hash);
+    uint rowCount = 1 + qrand() % 10;
+    BDSDownloadQueueWidget *downWidget = new BDSDownloadQueueWidget(rowCount,hash);
     NavgatFrame *sectionFrame = new NavgatFrame(downWidget,title,hash);
 
 //    ui->treeView->setIndexWidget(m_model->index(index,0),sectionFrame);
+    downWidget->setMaximumHeight(rowCount < 5 ? rowCount * 41 : 5 * 41);
     ui->treeView->setIndexWidget(m_model->indexFromItem(section),sectionFrame);
     ui->treeView->setIndexWidget(m_model->indexFromItem(item), downWidget);
     connect(sectionFrame, SIGNAL(removItem(uint)), this, SLOT(removeDownloadItem(uint)));
@@ -101,7 +103,6 @@ void MainWindow::popDownItem(uint hash, bool down)
             }
         }
     }
-
 }
 
 void MainWindow::on_pushButton_clicked()
@@ -111,5 +112,9 @@ void MainWindow::on_pushButton_clicked()
         QString title = QString("BDSR-000%1_1.2").arg(i);
         uint hash = qHash(title);
         appendItem(i,title, hash);
+    }
+    for(int i=0; i < m_model->rowCount(); ++i)
+    {
+        qDebug()<<"QTreeView visualRect:"<<ui->treeView->visualRect(m_model->index(i,0));
     }
 }
